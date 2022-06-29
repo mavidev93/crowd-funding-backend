@@ -9,11 +9,16 @@ import type {
   CallOverrides,
   ContractTransaction,
   Overrides,
+  PayableOverrides,
   PopulatedTransaction,
   Signer,
   utils,
 } from "ethers";
-import type { FunctionFragment, Result } from "@ethersproject/abi";
+import type {
+  FunctionFragment,
+  Result,
+  EventFragment,
+} from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type {
   TypedEventFilter,
@@ -26,17 +31,21 @@ import type {
 export interface ProjectsInterface extends utils.Interface {
   functions: {
     "addProject(bytes32,uint256)": FunctionFragment;
+    "expireProject(bytes32)": FunctionFragment;
+    "fundProject(bytes32)": FunctionFragment;
     "getAuthor(uint256)": FunctionFragment;
-    "s_authorToProject(address)": FunctionFragment;
     "s_projectHashedIdToFunders(bytes32,uint256)": FunctionFragment;
+    "s_projectHashedIdToProject(bytes32)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
       | "addProject"
+      | "expireProject"
+      | "fundProject"
       | "getAuthor"
-      | "s_authorToProject"
       | "s_projectHashedIdToFunders"
+      | "s_projectHashedIdToProject"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -44,31 +53,62 @@ export interface ProjectsInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
-    functionFragment: "getAuthor",
-    values: [PromiseOrValue<BigNumberish>]
+    functionFragment: "expireProject",
+    values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
-    functionFragment: "s_authorToProject",
-    values: [PromiseOrValue<string>]
+    functionFragment: "fundProject",
+    values: [PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getAuthor",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "s_projectHashedIdToFunders",
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigNumberish>]
   ): string;
+  encodeFunctionData(
+    functionFragment: "s_projectHashedIdToProject",
+    values: [PromiseOrValue<BytesLike>]
+  ): string;
 
   decodeFunctionResult(functionFragment: "addProject", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "getAuthor", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "s_authorToProject",
+    functionFragment: "expireProject",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "fundProject",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "getAuthor", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "s_projectHashedIdToFunders",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "s_projectHashedIdToProject",
+    data: BytesLike
+  ): Result;
 
-  events: {};
+  events: {
+    "ProjectAdded(address,bytes32)": EventFragment;
+  };
+
+  getEvent(nameOrSignatureOrTopic: "ProjectAdded"): EventFragment;
 }
+
+export interface ProjectAddedEventObject {
+  author: string;
+  projectHashId: string;
+}
+export type ProjectAddedEvent = TypedEvent<
+  [string, string],
+  ProjectAddedEventObject
+>;
+
+export type ProjectAddedEventFilter = TypedEventFilter<ProjectAddedEvent>;
 
 export interface Projects extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -98,26 +138,25 @@ export interface Projects extends BaseContract {
 
   functions: {
     addProject(
-      projectHash: PromiseOrValue<BytesLike>,
+      _projectHashId: PromiseOrValue<BytesLike>,
       budget: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    expireProject(
+      _projectHashId: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    fundProject(
+      _projectHashId: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     getAuthor(
       _authorIndex: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[string]>;
-
-    s_authorToProject(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<
-      [string, string, BigNumber] & {
-        projectHashId: string;
-        author: string;
-        budget: BigNumber;
-      }
-    >;
 
     s_projectHashedIdToFunders(
       arg0: PromiseOrValue<BytesLike>,
@@ -126,29 +165,40 @@ export interface Projects extends BaseContract {
     ): Promise<
       [string, BigNumber] & { funderAddress: string; amount: BigNumber }
     >;
+
+    s_projectHashedIdToProject(
+      arg0: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<
+      [string, string, BigNumber, BigNumber] & {
+        projectHashId: string;
+        author: string;
+        budget: BigNumber;
+        date: BigNumber;
+      }
+    >;
   };
 
   addProject(
-    projectHash: PromiseOrValue<BytesLike>,
+    _projectHashId: PromiseOrValue<BytesLike>,
     budget: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  expireProject(
+    _projectHashId: PromiseOrValue<BytesLike>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  fundProject(
+    _projectHashId: PromiseOrValue<BytesLike>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   getAuthor(
     _authorIndex: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<string>;
-
-  s_authorToProject(
-    arg0: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<
-    [string, string, BigNumber] & {
-      projectHashId: string;
-      author: string;
-      budget: BigNumber;
-    }
-  >;
 
   s_projectHashedIdToFunders(
     arg0: PromiseOrValue<BytesLike>,
@@ -158,10 +208,32 @@ export interface Projects extends BaseContract {
     [string, BigNumber] & { funderAddress: string; amount: BigNumber }
   >;
 
+  s_projectHashedIdToProject(
+    arg0: PromiseOrValue<BytesLike>,
+    overrides?: CallOverrides
+  ): Promise<
+    [string, string, BigNumber, BigNumber] & {
+      projectHashId: string;
+      author: string;
+      budget: BigNumber;
+      date: BigNumber;
+    }
+  >;
+
   callStatic: {
     addProject(
-      projectHash: PromiseOrValue<BytesLike>,
+      _projectHashId: PromiseOrValue<BytesLike>,
       budget: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    expireProject(
+      _projectHashId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    fundProject(
+      _projectHashId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -170,17 +242,6 @@ export interface Projects extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
-    s_authorToProject(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<
-      [string, string, BigNumber] & {
-        projectHashId: string;
-        author: string;
-        budget: BigNumber;
-      }
-    >;
-
     s_projectHashedIdToFunders(
       arg0: PromiseOrValue<BytesLike>,
       arg1: PromiseOrValue<BigNumberish>,
@@ -188,15 +249,46 @@ export interface Projects extends BaseContract {
     ): Promise<
       [string, BigNumber] & { funderAddress: string; amount: BigNumber }
     >;
+
+    s_projectHashedIdToProject(
+      arg0: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<
+      [string, string, BigNumber, BigNumber] & {
+        projectHashId: string;
+        author: string;
+        budget: BigNumber;
+        date: BigNumber;
+      }
+    >;
   };
 
-  filters: {};
+  filters: {
+    "ProjectAdded(address,bytes32)"(
+      author?: PromiseOrValue<string> | null,
+      projectHashId?: PromiseOrValue<BytesLike> | null
+    ): ProjectAddedEventFilter;
+    ProjectAdded(
+      author?: PromiseOrValue<string> | null,
+      projectHashId?: PromiseOrValue<BytesLike> | null
+    ): ProjectAddedEventFilter;
+  };
 
   estimateGas: {
     addProject(
-      projectHash: PromiseOrValue<BytesLike>,
+      _projectHashId: PromiseOrValue<BytesLike>,
       budget: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    expireProject(
+      _projectHashId: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    fundProject(
+      _projectHashId: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     getAuthor(
@@ -204,23 +296,33 @@ export interface Projects extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    s_authorToProject(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     s_projectHashedIdToFunders(
       arg0: PromiseOrValue<BytesLike>,
       arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    s_projectHashedIdToProject(
+      arg0: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
     addProject(
-      projectHash: PromiseOrValue<BytesLike>,
+      _projectHashId: PromiseOrValue<BytesLike>,
       budget: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    expireProject(
+      _projectHashId: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    fundProject(
+      _projectHashId: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     getAuthor(
@@ -228,14 +330,14 @@ export interface Projects extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    s_authorToProject(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     s_projectHashedIdToFunders(
       arg0: PromiseOrValue<BytesLike>,
       arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    s_projectHashedIdToProject(
+      arg0: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };

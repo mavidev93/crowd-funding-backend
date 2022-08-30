@@ -40,6 +40,7 @@ export declare namespace CrowdFund {
     goalAchieved: PromiseOrValue<boolean>;
     isCampaignOpen: PromiseOrValue<boolean>;
     isExists: PromiseOrValue<boolean>;
+    isOwnerWithdraw: PromiseOrValue<boolean>;
   };
 
   export type CampaignStructOutput = [
@@ -50,6 +51,7 @@ export declare namespace CrowdFund {
     BigNumber,
     BigNumber,
     BigNumber,
+    boolean,
     boolean,
     boolean,
     boolean
@@ -64,6 +66,7 @@ export declare namespace CrowdFund {
     goalAchieved: boolean;
     isCampaignOpen: boolean;
     isExists: boolean;
+    isOwnerWithdraw: boolean;
   };
 }
 
@@ -80,8 +83,9 @@ export interface CrowdFundInterface extends utils.Interface {
     "getHashById(uint256)": FunctionFragment;
     "hashToCampaign(string)": FunctionFragment;
     "idToHash(uint256)": FunctionFragment;
+    "minimum_fundAmount()": FunctionFragment;
+    "minimum_goalAmount()": FunctionFragment;
     "owner()": FunctionFragment;
-    "test()": FunctionFragment;
     "withdrawFunds(string)": FunctionFragment;
   };
 
@@ -98,8 +102,9 @@ export interface CrowdFundInterface extends utils.Interface {
       | "getHashById"
       | "hashToCampaign"
       | "idToHash"
+      | "minimum_fundAmount"
+      | "minimum_goalAmount"
       | "owner"
-      | "test"
       | "withdrawFunds"
   ): FunctionFragment;
 
@@ -151,8 +156,15 @@ export interface CrowdFundInterface extends utils.Interface {
     functionFragment: "idToHash",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
+  encodeFunctionData(
+    functionFragment: "minimum_fundAmount",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "minimum_goalAmount",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(functionFragment: "test", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "withdrawFunds",
     values: [PromiseOrValue<string>]
@@ -199,29 +211,46 @@ export interface CrowdFundInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "idToHash", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "minimum_fundAmount",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "minimum_goalAmount",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "test", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "withdrawFunds",
     data: BytesLike
   ): Result;
 
   events: {
-    "Fund(address,address,uint256)": EventFragment;
+    "Create(address,uint256)": EventFragment;
+    "Fund(address,uint256,uint256)": EventFragment;
     "Test(address,uint256)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "Create"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Fund"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Test"): EventFragment;
 }
 
-export interface FundEventObject {
-  from: string;
+export interface CreateEventObject {
   campaignOwner: string;
   id: BigNumber;
 }
+export type CreateEvent = TypedEvent<[string, BigNumber], CreateEventObject>;
+
+export type CreateEventFilter = TypedEventFilter<CreateEvent>;
+
+export interface FundEventObject {
+  from: string;
+  amount: BigNumber;
+  id: BigNumber;
+}
 export type FundEvent = TypedEvent<
-  [string, string, BigNumber],
+  [string, BigNumber, BigNumber],
   FundEventObject
 >;
 
@@ -280,7 +309,7 @@ export interface CrowdFund extends BaseContract {
     ): Promise<ContractTransaction>;
 
     fundCampaign(
-      _hash: PromiseOrValue<string>,
+      hash: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -289,7 +318,7 @@ export interface CrowdFund extends BaseContract {
     ): Promise<[CrowdFund.CampaignStructOutput[]]>;
 
     getCampaignByHash(
-      _hash: PromiseOrValue<string>,
+      hash: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[CrowdFund.CampaignStructOutput]>;
 
@@ -319,6 +348,7 @@ export interface CrowdFund extends BaseContract {
         BigNumber,
         boolean,
         boolean,
+        boolean,
         boolean
       ] & {
         campaignOwner: string;
@@ -331,6 +361,7 @@ export interface CrowdFund extends BaseContract {
         goalAchieved: boolean;
         isCampaignOpen: boolean;
         isExists: boolean;
+        isOwnerWithdraw: boolean;
       }
     >;
 
@@ -339,11 +370,11 @@ export interface CrowdFund extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
-    owner(overrides?: CallOverrides): Promise<[string]>;
+    minimum_fundAmount(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    test(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+    minimum_goalAmount(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    owner(overrides?: CallOverrides): Promise<[string]>;
 
     withdrawFunds(
       hash: PromiseOrValue<string>,
@@ -369,7 +400,7 @@ export interface CrowdFund extends BaseContract {
   ): Promise<ContractTransaction>;
 
   fundCampaign(
-    _hash: PromiseOrValue<string>,
+    hash: PromiseOrValue<string>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -378,7 +409,7 @@ export interface CrowdFund extends BaseContract {
   ): Promise<CrowdFund.CampaignStructOutput[]>;
 
   getCampaignByHash(
-    _hash: PromiseOrValue<string>,
+    hash: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<CrowdFund.CampaignStructOutput>;
 
@@ -408,6 +439,7 @@ export interface CrowdFund extends BaseContract {
       BigNumber,
       boolean,
       boolean,
+      boolean,
       boolean
     ] & {
       campaignOwner: string;
@@ -420,6 +452,7 @@ export interface CrowdFund extends BaseContract {
       goalAchieved: boolean;
       isCampaignOpen: boolean;
       isExists: boolean;
+      isOwnerWithdraw: boolean;
     }
   >;
 
@@ -428,11 +461,11 @@ export interface CrowdFund extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string>;
 
-  owner(overrides?: CallOverrides): Promise<string>;
+  minimum_fundAmount(overrides?: CallOverrides): Promise<BigNumber>;
 
-  test(
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  minimum_goalAmount(overrides?: CallOverrides): Promise<BigNumber>;
+
+  owner(overrides?: CallOverrides): Promise<string>;
 
   withdrawFunds(
     hash: PromiseOrValue<string>,
@@ -458,7 +491,7 @@ export interface CrowdFund extends BaseContract {
     ): Promise<void>;
 
     fundCampaign(
-      _hash: PromiseOrValue<string>,
+      hash: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -467,7 +500,7 @@ export interface CrowdFund extends BaseContract {
     ): Promise<CrowdFund.CampaignStructOutput[]>;
 
     getCampaignByHash(
-      _hash: PromiseOrValue<string>,
+      hash: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<CrowdFund.CampaignStructOutput>;
 
@@ -497,6 +530,7 @@ export interface CrowdFund extends BaseContract {
         BigNumber,
         boolean,
         boolean,
+        boolean,
         boolean
       ] & {
         campaignOwner: string;
@@ -509,6 +543,7 @@ export interface CrowdFund extends BaseContract {
         goalAchieved: boolean;
         isCampaignOpen: boolean;
         isExists: boolean;
+        isOwnerWithdraw: boolean;
       }
     >;
 
@@ -517,9 +552,11 @@ export interface CrowdFund extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
-    owner(overrides?: CallOverrides): Promise<string>;
+    minimum_fundAmount(overrides?: CallOverrides): Promise<BigNumber>;
 
-    test(overrides?: CallOverrides): Promise<void>;
+    minimum_goalAmount(overrides?: CallOverrides): Promise<BigNumber>;
+
+    owner(overrides?: CallOverrides): Promise<string>;
 
     withdrawFunds(
       hash: PromiseOrValue<string>,
@@ -528,14 +565,23 @@ export interface CrowdFund extends BaseContract {
   };
 
   filters: {
-    "Fund(address,address,uint256)"(
-      from?: PromiseOrValue<string> | null,
+    "Create(address,uint256)"(
       campaignOwner?: PromiseOrValue<string> | null,
+      id?: PromiseOrValue<BigNumberish> | null
+    ): CreateEventFilter;
+    Create(
+      campaignOwner?: PromiseOrValue<string> | null,
+      id?: PromiseOrValue<BigNumberish> | null
+    ): CreateEventFilter;
+
+    "Fund(address,uint256,uint256)"(
+      from?: PromiseOrValue<string> | null,
+      amount?: PromiseOrValue<BigNumberish> | null,
       id?: PromiseOrValue<BigNumberish> | null
     ): FundEventFilter;
     Fund(
       from?: PromiseOrValue<string> | null,
-      campaignOwner?: PromiseOrValue<string> | null,
+      amount?: PromiseOrValue<BigNumberish> | null,
       id?: PromiseOrValue<BigNumberish> | null
     ): FundEventFilter;
 
@@ -568,14 +614,14 @@ export interface CrowdFund extends BaseContract {
     ): Promise<BigNumber>;
 
     fundCampaign(
-      _hash: PromiseOrValue<string>,
+      hash: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     getAllCampaigns(overrides?: CallOverrides): Promise<BigNumber>;
 
     getCampaignByHash(
-      _hash: PromiseOrValue<string>,
+      hash: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -601,11 +647,11 @@ export interface CrowdFund extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
+    minimum_fundAmount(overrides?: CallOverrides): Promise<BigNumber>;
 
-    test(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
+    minimum_goalAmount(overrides?: CallOverrides): Promise<BigNumber>;
+
+    owner(overrides?: CallOverrides): Promise<BigNumber>;
 
     withdrawFunds(
       hash: PromiseOrValue<string>,
@@ -632,14 +678,14 @@ export interface CrowdFund extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     fundCampaign(
-      _hash: PromiseOrValue<string>,
+      hash: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     getAllCampaigns(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getCampaignByHash(
-      _hash: PromiseOrValue<string>,
+      hash: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -665,11 +711,15 @@ export interface CrowdFund extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    test(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    minimum_fundAmount(
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    minimum_goalAmount(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     withdrawFunds(
       hash: PromiseOrValue<string>,

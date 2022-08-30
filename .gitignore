@@ -3,7 +3,7 @@ node_modules
 coverage
 coverage.json
 typechain
-
+ProjectNotes.md
 #Hardhat files
 cache
 artifacts

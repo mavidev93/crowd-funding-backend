@@ -13,6 +13,7 @@ module.exports = async function () {
         updateContractAddresses()
         updateContractAbi()
     }
+    
 }
 
 async function updateContractAbi() {
